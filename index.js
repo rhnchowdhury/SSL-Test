@@ -42,7 +42,7 @@ app.get('/user', (req, res) => {
         }
         else {
             res.send(result)
-            console.log(result)
+            // console.log(result)
         }
     })
 });
@@ -89,32 +89,30 @@ app.post('/sign', (req, res) => {
     })
 });
 
+
 app.post('/login', (req, res) => {
     const sql = "INSERT into login (`Name`,`Email`,`Password`) VALUES(?)";
     const values = [
         req.body.name,
-        // req.body.address,
         req.body.account,
-        // req.body.phone,
-        req.body.password,
+        req.body.password
     ]
-
+    console.log(values);
     dbConnection.query(sql, [values], (err, data) => {
         if (err) return res.json("Error")
-        return res.json(data);
-    })
+        // return res.json(data);
+    });
 });
-
 
 app.post('/donate', (req, res) => {
     const sql = "INSERT into donate (`Amount`,`Amount_Type`) VALUES(?)";
     const values = [
         req.body.amount,
-        req.body.selects
+        req.body.selects,
     ]
-    const amount1 = req.body.amount;
-    // const test = req.body;
-    // dbConnection.query(sql, [amount1], (err, data) => {
+    const { amount, selects, name } = req.body;
+    console.log(amount, selects, name);
+
     dbConnection.query(sql, [values], (err, data) => {
         if (err) return res.json("Error")
         // return res.json(data);
@@ -122,13 +120,13 @@ app.post('/donate', (req, res) => {
     })
 
     const data = {
-        total_amount: amount1,
-        // total_amount: 100,
+        // total_amount: amount,
+        total_amount: 100,
         currency: 'BDT',
-        tran_id: 'REF123', // use unique tran_id for each api call
-        success_url: "http://localhost:4000/payment/success/:tran_id",
-        // success_url: `http://localhost:4000/payment/success/${tran_id}`,
-        fail_url: 'http://localhost:3030/fail',
+        tran_id: tran_id, // use unique tran_id for each api call 
+        // success_url: "http://localhost:3000/payment/success/:tran_id",
+        success_url: `http://localhost:3000/payment/success/${tran_id}`,
+        fail_url: `http://localhost:3000/payment/fail/${tran_id}`,
         cancel_url: 'http://localhost:3030/cancel',
         ipn_url: 'http://localhost:3030/ipn',
         shipping_method: 'Courier',
@@ -153,7 +151,7 @@ app.post('/donate', (req, res) => {
         ship_postcode: 1000,
         ship_country: 'Bangladesh',
     };
-    // const sslcz = new SSLCommerzPayment(process.env.SSL_STORE_ID, process.env.SSL_PASSWD, is_live)
+    // console.log(data);
     const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
     sslcz.init(data).then(apiResponse => {
         // Redirect the user to payment gateway
@@ -163,18 +161,23 @@ app.post('/donate', (req, res) => {
         console.log('Redirecting to: ', GatewayPageURL)
     });
 
+    app.post('/payment/success/:tranId', (req, res) => {
+        console.log(req.params.tranId);
+        res.redirect(`http://localhost:3000/payment/success/${req.params.tranId}`)
+        // res.redirect('http://localhost:3000/payment/success/:tran_id')
 
-    app.post('/payment/success/:tran_id', async (req, res) => {
-        console.log(req.params.tran_id);
+    })
+
+    app.post('/payment/fail/:tranId', (req, res) => {
+        console.log(req.params.tranId);
+        res.redirect(`http://localhost:3000/payment/success/${req.params.tranId}`)
+        // res.redirect('http://localhost:3000/payment/success/:tran_id')
 
     })
 
 })
 
-// app.post('/user', (req, res) => {
-//     console.log('api called')
-//     console.log(req.body);
-// })
+
 
 app.listen(port, () => {
     console.log(`Backend running on ${port}`);
